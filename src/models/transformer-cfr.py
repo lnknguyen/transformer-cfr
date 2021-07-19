@@ -6,7 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.mimic.blocks import *
 
 '''
 3-head architecture: treatment and potential outcomes y_0 y_1
@@ -22,48 +21,38 @@ class MIMIC_Transformer(nn.Module):
         
         super().__init__()
         
-        self.cfg = cfg
-        
         self.gender_embed = nn.Embedding(num_embeddings=3, embedding_dim=1)
 
         self.diag_embed = nn.Embedding(num_embeddings=vocab_size,
-                                        embedding_dim= self.cfg.embedding_dim,
-                                        padding_idx=padding_idx,)
+                                        embedding_dim= cfg.MODEL.EMBEDDING_DIM,
+                                        padding_idx=padding_idx)
 
         self.embed_sum = EmbeddingAdder()
 
-        encoder_layer = nn.TransformerEncoderLayer(d_model = self.cfg.embedding_dim + 3, nhead= 4)
+        encoder_layer = nn.TransformerEncoderLayer(d_model = cfg.MODEL.EMBEDDING_DIM + 3, nhead= 4)
+
         self.transformer = nn.TransformerEncoder(
             encoder_layer,
-            num_layers = 8,
+            num_layers = cfg.MODEL.ENCODER_NUM_LAYER,
         )
 
-
         self.y0_fc = nn.Sequential(
-            nn.Linear(self.cfg.embedding_dim + 3, self.cfg.fc_hidden_size),
-            nn.BatchNorm1d(self.cfg.fc_hidden_size),
+            nn.Linear(cfg.MODEL.EMBEDDING_DIM + 3, cfg.MODEL.FC_HIDDEN_SIZE),
+            nn.BatchNorm1d(cfg.MODEL.FC_HIDDEN_SIZE),
             nn.Dropout(0.3),
             nn.ReLU(),
-            nn.Linear(self.cfg.fc_hidden_size, 1)
+            nn.Linear(cfg.MODEL.FC_HIDDEN_SIZE, 1)
         )
 
         self.y1_fc = nn.Sequential(
-            nn.Linear(self.cfg.embedding_dim + 3, self.cfg.fc_hidden_size),
-            nn.BatchNorm1d(self.cfg.fc_hidden_size),
+            nn.Linear(cfg.MODEL.EMBEDDING_DIM + 3, cfg.MODEL.FC_HIDDEN_SIZE),
+            nn.BatchNorm1d(cfg.MODEL.FC_HIDDEN_SIZE),
             nn.Dropout(0.3),
             nn.ReLU(),
-            nn.Linear(self.cfg.fc_hidden_size, 1)
+            nn.Linear(cfg.MODEL.FC_HIDDEN_SIZE, 1)
         )
         
-        self.d_fc = nn.Sequential(
-            nn.Linear(self.cfg.embedding_dim + 3, self.cfg.fc_hidden_size),
-            nn.BatchNorm1d(self.cfg.fc_hidden_size),
-            nn.Dropout(0.3),
-            nn.ReLU(),
-            nn.Linear(self.cfg.fc_hidden_size, 1)
-        )
-
-        self.tr_fc = nn.Linear(self.cfg.embedding_dim + 3, 1) # treatment
+        self.tr_fc = nn.Linear(cfg.MODEL.EMBEDDING_DIM + 3, 1) # treatment
         self.bce_loss_fn = nn.BCEWithLogitsLoss() #
         
     def forward(
@@ -95,7 +84,6 @@ class MIMIC_Transformer(nn.Module):
         )
 
         # Summing embedded values
-        
         x_embed_sum = self.embed_sum(x_embed)
         x_embed_sum = torch.cat([x_embed_sum, x_gender, x_age, x_timedelta],dim=2)
         
@@ -103,17 +91,11 @@ class MIMIC_Transformer(nn.Module):
         x_seq= x_trans.mean(1)
         
         t_logits = self.tr_fc(x_seq).view(-1)
-        d_preds = self.d_fc(x_seq).view(-1)
-
-        # Dummy var
-        y0_pred = self.y0_fc(x_seq).view(-1)
-        y1_pred = self.y1_fc(x_seq).view(-1)
 
         t_loss = self.bce_loss_fn(t_logits, t)
         factual_loss = self.bce_loss_fn(d_preds, yf)
 
-        loss =  factual_loss
-        #loss = t_loss
+        loss =  factual_loss + t_loss
         
         return (
             loss,

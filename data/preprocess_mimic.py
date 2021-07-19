@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd 
 
 # Data dir
-data_dir = "mimic/"
+data_dir = "mimic/raw"
+output_dir = "mimic/processed"
 
 # Read csv files
 pad = pd.read_csv(data_dir + "patients.csv")
@@ -82,4 +83,4 @@ def _sequentialize_codes(diag, proc):
 
 final["seqential_code"] = final.apply(lambda x: _sequentialize_codes(x.diag_icd_code, x.proc_icd_code), axis = 1)
 
-final.to_csv(data_dir + "sequential_mimic.csv")
+final.to_csv(output_dir + "sequential_mimic.csv")
