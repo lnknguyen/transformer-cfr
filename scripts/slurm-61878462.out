@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "../src/models/mnist/run_mnist.py", line 4, in <module>
+    from config.config import cfg
+ModuleNotFoundError: No module named 'config'
