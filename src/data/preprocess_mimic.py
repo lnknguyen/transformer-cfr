@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd 
 
 # Data dir
-data_dir = "mimic/raw"
-output_dir = "mimic/processed"
+data_dir = "mimic/raw/"
+output_dir = "mimic/processed/"
 
 # Read csv files
 pad = pd.read_csv(data_dir + "patients.csv")

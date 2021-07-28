@@ -1,7 +1,5 @@
-
-from utils import get_project_root
-root = get_project_root()
-
+import sys
+sys.path.append("../")
 
 import numpy as np
 import pandas as pd
@@ -9,6 +7,7 @@ from vocab.vectorizer import MIMICVectorizer
 from scipy.special import expit, logit
 from scipy.stats import bernoulli
 import torch
+import torch.nn as nn
 
 def pad_x_sequence_along_diagnoses(seq: list, max_diagnosis_length: int, padding_value: int = 0
     ) -> torch.LongTensor:
@@ -48,7 +47,10 @@ def simulate_outcome(beta0, beta1, gamma, confounder, treatment, setting):
     
     return y0, y1, yf
 
-def make_cfr_mimic(beta0, beta1, gamma, setting):
+def make_cfr_mimic(beta0, beta1, gamma, setting, max_diag_length_per_visit = 66):
+    '''
+    Creates loaders for MIMIC dataset.
+    '''
     
     # Load data
     data_dir =  f'../../data/mimic/processed/sequential_mimic.csv'
@@ -77,25 +79,31 @@ def make_cfr_mimic(beta0, beta1, gamma, setting):
     )
     
     x_seq_length = torch.LongTensor(x_seq_length)
-
+    
     ages, timedelta_means = [], []
-    for x in data["sequential_days_delta"].values:
-        timedelta_means.append(np.mean([float(i) for i in x.split(";")]))
     
-    x_age = data["age"].to_numpy()
-    x_age = torch.FloatTensor(data["age"].to_numpy()).unsqueeze(1)
-    
-    x_gender = torch.LongTensor(data["gender"].to_numpy())
+    # Get the average of admission age
+    age = data["admission_age"]
     
     # Define treatment and confounders
-    t = data["treated"]
-    z = data['long_los']
+    treatment = data["treated"]
     
-    y0, y1, yf = simulate_outcome(beta0, beta1, gamma, z, t, setting)
-    return x_diag, t, y0, y1, yf
+    y0, y1, yf = simulate_outcome(beta0, beta1, gamma, age, treatment, setting)
+    
+    x_age = torch.FloatTensor(age)
+    x_gender = torch.LongTensor(data["gender"])
+    t = torch.LongTensor(data["treated"])
+    y0 = torch.FloatTensor(y0)
+    y1 = torch.FloatTensor(y1)
+    yf = torch.FloatTensor(yf
+                          )
+    return x_diag, x_age, x_gender, t, y0, y1, yf
 
 def make_cfr_mnist(beta0, beta1, gamma, setting):
-
+    '''
+    Creates loaders for MNIST dataset.
+    '''
+    
     # Load data
     data_dir =  '../../../data/mnist/processed/mnist-cfr.npz'
     data = np.load(data_dir)
@@ -108,3 +116,6 @@ def make_cfr_mnist(beta0, beta1, gamma, setting):
     
     y0, y1, yf = simulate_outcome(beta0, beta1, gamma, z, t, setting)
     return xs_1, xs_2, xs_3, t, z, y0, y1, yf
+
+# Test run
+make_cfr_mimic(0, 0, 0, 'binary')

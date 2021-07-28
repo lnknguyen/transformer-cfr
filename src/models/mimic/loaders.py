@@ -1,5 +1,5 @@
 import sys, os
-sys.path.append("../../")
+sys.path.append("../")
 
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset, Dataset
@@ -19,12 +19,12 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
     '''
     Return context X, treatment T, factual outcome yf and potential outcomes y_0 ... y_n from context with noise
     '''
-    xs_1, xs_2, xs_3, t, z, y0, y1, yf = make_cfr_mimic(0,0,0,'binary')
+    x_diag, x_age, x_gender, z, t, y0, y1, yf = make_cfr_mimic(0,0,0,'binary')
 
     # MNIST
-    xs_1 = torch.LongTensor(xs_1)
-    xs_2 = torch.LongTensor(xs_2)
-    xs_3 = torch.LongTensor(xs_3)
+    x_diag = torch.LongTensor(x_diag)
+    x_age = torch.FloatTensor(x_age)
+    x_gender = torch.LongTensor(x_gender)
     t = torch.FloatTensor(t)
     z = torch.FloatTensor(z)
     yf = torch.FloatTensor(yf)
@@ -42,9 +42,9 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
     train_indices, valid_indices = tr_indices[val_split:], tr_indices[:val_split]
     
     train_dataset = TensorDataset(
-        xs_1[train_indices],
-        xs_2[train_indices],
-        xs_3[train_indices],
+        x_diag[train_indices],
+        x_age[train_indices],
+        x_gender[train_indices],
         t[train_indices],
         z[train_indices],
         yf[train_indices],
@@ -53,9 +53,9 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
     )
 
     val_dataset = TensorDataset(
-        xs_1[valid_indices],
-        xs_2[valid_indices],
-        xs_3[valid_indices],
+        x_diag[valid_indices],
+        x_age[valid_indices],
+        x_gender[valid_indices],
         t[valid_indices],
         z[valid_indices],
         yf[valid_indices],
@@ -64,9 +64,9 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
     )
 
     test_dataset = TensorDataset(
-        xs_1[test_indices],
-        xs_2[test_indices],
-        xs_3[test_indices],
+        x_diag[test_indices],
+        x_age[test_indices],
+        x_gender[test_indices],
         t[test_indices],
         z[test_indices],
         yf[test_indices],

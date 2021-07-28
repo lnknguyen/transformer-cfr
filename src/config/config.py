@@ -21,15 +21,18 @@ _C.MODEL.EMBEDDING_DIM = 300
 _C.MODEL.DROPOUT_P = 0.0
 _C.MODEL.ENCODER_NUM_LAYER = 2
 
-_C.MODEL.DIAG_INPUT_VOCAB_SIZE = 1000
-_C.MODEL.PROC_INPUT_VOCAB_SIZE = 1000
+# Number of unique diagnosis + procedure codes
+_C.MODEL.DIAG_VOCAB_SIZE = 8969
 _C.MODEL.VOCAB_SIZE = 258
 
 _C.MODEL.N_OUT_CLASSES = 2
 _C.MODEL.FC_HIDDEN_SIZE = 16
 
+# Max codes given in a single visit
+_C.MODEL.MAX_SEQ_LENGTH = 66
 
-_C.MODEL.MAX_SEQ_LENGTH = 200
+# Max visits made by a single patient
+_C.MODEL.MAX_VISIT_LENGTH = 20
 
 # Transformer Params
 _C.MODEL.NUM_HEADS = 8
