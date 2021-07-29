@@ -10,7 +10,7 @@ import time
 # Initial script
 def run_experiment():
     train_dataloader, val_dataloader, test_dataloader = get_mimic_cfr_loaders(batch_size = cfg.TRAIN.BATCH_SIZE)
-    model = MIMIC_Transformer(cfg, vocab_size = 258)
+    model = MIMIC_Transformer(cfg, vocab_size = cfg.MODEL.DIAG_VOCAB_SIZE)
     trainer = TrainerMIMIC(cfg, model, train_dataloader, val_dataloader, test_dataloader, "trans_mimic")
     trainer.fit()
 

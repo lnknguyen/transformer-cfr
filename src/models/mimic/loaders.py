@@ -7,6 +7,7 @@ import torch
 
 from data.prepare_cfr_dataset import make_cfr_mimic
 
+
 torch.manual_seed(1)
 device = "cpu"
 # take over whatever gpus are on the system
@@ -19,19 +20,17 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
     '''
     Return context X, treatment T, factual outcome yf and potential outcomes y_0 ... y_n from context with noise
     '''
-    x_diag, x_age, x_gender, z, t, y0, y1, yf = make_cfr_mimic(0,0,0,'binary')
-
-    # MNIST
+    x_diag, x_age, x_gender, t, y0, y1, yf = make_cfr_mimic(0,0,0,'binary')
+    
     x_diag = torch.LongTensor(x_diag)
     x_age = torch.FloatTensor(x_age)
     x_gender = torch.LongTensor(x_gender)
     t = torch.FloatTensor(t)
-    z = torch.FloatTensor(z)
     yf = torch.FloatTensor(yf)
     y0 = torch.FloatTensor(y0)
     y1 = torch.FloatTensor(y1)
 
-    dataset_size = int(xs_1.shape[0])
+    dataset_size = int(x_diag.shape[0])
 
     indices = list(range(dataset_size))
     ts_split = int(np.floor(0.2 * dataset_size))
@@ -46,7 +45,6 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
         x_age[train_indices],
         x_gender[train_indices],
         t[train_indices],
-        z[train_indices],
         yf[train_indices],
         y0[train_indices],
         y1[train_indices]
@@ -57,7 +55,6 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
         x_age[valid_indices],
         x_gender[valid_indices],
         t[valid_indices],
-        z[valid_indices],
         yf[valid_indices],
         y0[valid_indices],
         y1[valid_indices]
@@ -68,7 +65,6 @@ def get_mimic_cfr_loaders(batch_size = 64, num_workers = 1, device = device):
         x_age[test_indices],
         x_gender[test_indices],
         t[test_indices],
-        z[test_indices],
         yf[test_indices],
         y0[test_indices],
         y1[test_indices]

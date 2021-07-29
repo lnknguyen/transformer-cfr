@@ -380,13 +380,132 @@ Trainer class for MIMIC dataset
 '''
 class TrainerMIMIC(BaseTrainer):
 
-    def __init__(self, cfg, model, train_dataloader, val_dataloader,  test_dataloader):
-        super().__init__(cfg, model, train_dataloader, val_dataloader, test_dataloader)
-
+    def __init__(self, cfg, model, train_dataloader, val_dataloader,  test_dataloader, model_name):
+        super().__init__(cfg, model, train_dataloader, val_dataloader, test_dataloader, model_name)
+    
     def prepare_batch(self, batch_data):
-        return super().prepare_batch(batch_data)
+        
+        x_diag = batch_data[0].to(self.device)
+        x_age = batch_data[1].to(self.device)
+        x_gender = batch_data[2].to(self.device)
+        t = batch_data[3].to(self.device)
+        yf = batch_data[4].to(self.device)
+        y0 = batch_data[5].to(self.device)
+        y1 = batch_data[6].to(self.device)
+        
+        return x_diag, x_age, x_gender, t, yf, y0, y1
 
     def run_epoch(self, split, epoch_count=0):
-        return super().run_epoch(split, epoch_count=epoch_count)
+        self._init_log_variables()
 
-    
+        epoch_metrics = {}
+        if split.lower() == "train":
+            loader = self.train_loader
+        elif split.lower() == "val":
+            loader = self.val_loader
+        elif split.lower() == "test":
+            loader = self.test_loader
+        
+        is_train = True if split.lower() == "train" else False
+        losses = []
+        self.model.train(is_train)
+
+        for batch_idx, batch_data in enumerate(loader):
+            
+            x_diag, x_age, x_gender, t, yf, y0, y1 = self.prepare_batch(batch_data)
+
+            with torch.set_grad_enabled(is_train):
+                
+                loss, yf_pred, y0_pred, y1_pred, t_logits = self.model(x_diag, x_age, x_gender, t, yf, y0, y1)
+            
+                t_pred = torch.round(torch.sigmoid(t_logits))
+
+                loss = (
+                    loss.mean()
+                )  
+                losses.append(loss.item())
+
+                self.log_variables["y0_trues"].extend(y0.cpu().detach().numpy().tolist())
+                self.log_variables["y0_preds"].extend(y0_pred.cpu().detach().numpy().tolist())
+                self.log_variables["y1_trues"].extend(y1.cpu().detach().numpy().tolist())
+                self.log_variables["y1_preds"].extend(y1_pred.cpu().detach().numpy().tolist())
+                self.log_variables["t_trues"].extend(t.cpu().detach().numpy().tolist())
+                self.log_variables["t_preds"].extend(t_pred.cpu().detach().numpy().tolist())
+
+                if is_train:
+                    # backprop and update the parameters
+                    self.model.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), 0.5
+                    )
+
+                    self.optimizer.step()
+            
+         #Compute metrics
+        if not is_train:
+
+            # compute metrics
+            for k, v in self.log_variables.items():
+                self.log_variables[k] = np.array(v)
+
+            yf_true = np.where(
+                self.log_variables["t_trues"] == 0,
+                self.log_variables["y0_trues"],
+                self.log_variables["y1_trues"]
+            )
+            yf_pred = np.where(
+                self.log_variables["t_trues"] == 0,
+                self.log_variables["y0_preds"],
+                self.log_variables["y1_preds"]
+            )
+
+            ycf_true = np.where(
+                self.log_variables["t_trues"] == 0,
+                self.log_variables["y1_trues"],
+                self.log_variables["y0_trues"]
+            )
+            ycf_pred = np.where(
+                self.log_variables["t_trues"] == 0,
+                self.log_variables["y1_preds"],
+                self.log_variables["y0_preds"]
+            )
+
+            ## Computer ATT
+            treated_idx = (self.log_variables["t_trues"] == 0)
+
+            y1_true_treated = self.log_variables["y1_trues"][treated_idx]
+            y0_true_treated = self.log_variables["y0_trues"][treated_idx]
+
+            y1_pred_treated = self.log_variables["y1_preds"][treated_idx]
+            y0_pred_treated = self.log_variables["y0_preds"][treated_idx]
+
+            pred_att = (y1_pred_treated - y0_pred_treated)
+            true_att = (y1_true_treated - y0_true_treated)
+
+            epoch_metrics["factual_mae"] = (yf_true - yf_pred).mean()
+
+            epoch_metrics["loss"] = float(np.mean(losses))
+            ite_true = self.log_variables["y1_trues"] - self.log_variables["y0_trues"]
+            ite_pred = self.log_variables["y1_preds"] - self.log_variables["y0_preds"]
+
+            del_fcf_true = yf_true - ycf_true
+            del_fcf_pred = yf_pred - ycf_pred
+
+            epoch_metrics["ite_true"] = ite_true.mean()
+            epoch_metrics["ite_pred"] = ite_pred.mean()
+
+            epoch_metrics["pehe"] = np.sqrt(np.mean(np.square((ite_true) - (ite_pred))))
+            epoch_metrics["absATE"] = np.abs(np.mean(ite_true) - np.mean(ite_pred))
+            epoch_metrics["absATT"] = np.abs(np.mean(pred_att - true_att))
+            
+            epoch_metrics["loss"] = float(np.mean(losses))            
+            print_str = f"{split} epoch: {epoch_count}\t "
+            for k, v in epoch_metrics.items():
+                print_str += f"{k}: {v:.5f} "
+        
+            print(print_str)
+        else:
+            epoch_metrics["loss"] = float(np.mean(losses))
+
+        return epoch_metrics  

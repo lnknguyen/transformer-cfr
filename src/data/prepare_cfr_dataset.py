@@ -8,6 +8,7 @@ from scipy.special import expit, logit
 from scipy.stats import bernoulli
 import torch
 import torch.nn as nn
+from ast import literal_eval
 
 def pad_x_sequence_along_diagnoses(seq: list, max_diagnosis_length: int, padding_value: int = 0
     ) -> torch.LongTensor:
@@ -33,6 +34,7 @@ def simulate_outcome(beta0, beta1, gamma, confounder, treatment, setting):
     if setting == 'binary':
         y0 = bernoulli.rvs(expit(beta1*confounder))
         y1 = bernoulli.rvs(expit(beta0 + beta1*confounder))
+        print(y0.shape)
     elif setting == 'continuous':
         y0 = beta1*confounder + random.normal(0, gamma)
         y1 = beta0 + y0
@@ -53,13 +55,19 @@ def make_cfr_mimic(beta0, beta1, gamma, setting, max_diag_length_per_visit = 66)
     '''
     
     # Load data
-    data_dir =  f'../../data/mimic/processed/sequential_mimic.csv'
+    data_dir =  f'../../../data/mimic/processed/sequential_mimic.csv'
     data = pd.read_csv(data_dir)
-
+    
+    # Define treatment and confounders
+    age = data["admission_age"].apply(literal_eval)
+    los = data["los"].apply(literal_eval)
+    treatment = data["treated"]
+    gender = data["gender"]
+    
     # Vectorizer
     vectorizer = MIMICVectorizer.from_dataframe(data, "sequential_code")
     
-    x_diag, x_seq_length = [], []
+    x_diag, x_age = [], []
     code_len_per_visit = []
     
     # Vectorize everything
@@ -72,32 +80,26 @@ def make_cfr_mimic(beta0, beta1, gamma, setting, max_diag_length_per_visit = 66)
                 diag, max_diag_length_per_visit
         )
         x_diag.append(padded_x_seq_along_diagnoses)
-        x_seq_length.append(seq_length)
+
+        padded_x_age_along_diagnoses = pad_x_sequence_along_diagnoses(
+                age, max_diag_length_per_visit
+        )
+        x_age.append(padded_x_age_along_diagnoses)
 
     x_diag = nn.utils.rnn.pad_sequence(
             x_diag, batch_first=True
     )
+    x_age = nn.utils.rnn.pad_sequence(
+            x_age, batch_first=True
+    )    
     
     x_seq_length = torch.LongTensor(x_seq_length)
     
-    ages, timedelta_means = [], []
+    #  set average age as confounder
+    avg_age =  np.array([np.mean(sublist) for sublist in np.array(age)])
+    y0, y1, yf = simulate_outcome(beta0, beta1, gamma, avg_age, treatment, setting)
     
-    # Get the average of admission age
-    age = data["admission_age"]
-    
-    # Define treatment and confounders
-    treatment = data["treated"]
-    
-    y0, y1, yf = simulate_outcome(beta0, beta1, gamma, age, treatment, setting)
-    
-    x_age = torch.FloatTensor(age)
-    x_gender = torch.LongTensor(data["gender"])
-    t = torch.LongTensor(data["treated"])
-    y0 = torch.FloatTensor(y0)
-    y1 = torch.FloatTensor(y1)
-    yf = torch.FloatTensor(yf
-                          )
-    return x_diag, x_age, x_gender, t, y0, y1, yf
+    return x_diag, x_age, gender, treatment, y0, y1, yf
 
 def make_cfr_mnist(beta0, beta1, gamma, setting):
     '''
@@ -116,6 +118,3 @@ def make_cfr_mnist(beta0, beta1, gamma, setting):
     
     y0, y1, yf = simulate_outcome(beta0, beta1, gamma, z, t, setting)
     return xs_1, xs_2, xs_3, t, z, y0, y1, yf
-
-# Test run
-make_cfr_mimic(0, 0, 0, 'binary')

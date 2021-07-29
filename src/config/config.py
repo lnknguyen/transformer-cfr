@@ -10,6 +10,22 @@ _C = CN()
 cfg = _C
 
 # ---------------------------------------------------------------------------- #
+# Simulation options
+# ---------------------------------------------------------------------------- #
+_C.SIM = CN()
+
+# Noise level for input
+_C.SIM.INPUT_NOISE = 0.2
+
+# Noise level for input
+_C.SIM.OUTPUT_NOISE = 0.2
+
+# Bias level
+_C.SIM.BIAS_RATE = 0.2
+
+_C.SIM.TREATMENT_STRENGTH = 0.2
+_C.SIM.CONFOUNDER_STRENGTH = 0.2
+# ---------------------------------------------------------------------------- #
 # Model options
 # ---------------------------------------------------------------------------- #
 _C.MODEL = CN()
@@ -22,7 +38,7 @@ _C.MODEL.DROPOUT_P = 0.0
 _C.MODEL.ENCODER_NUM_LAYER = 2
 
 # Number of unique diagnosis + procedure codes
-_C.MODEL.DIAG_VOCAB_SIZE = 8969
+_C.MODEL.DIAG_VOCAB_SIZE = 3448
 _C.MODEL.VOCAB_SIZE = 258
 
 _C.MODEL.N_OUT_CLASSES = 2
