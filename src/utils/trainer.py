@@ -1,6 +1,7 @@
 import sys
 sys.path.append("../")
 
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -69,7 +70,7 @@ class BaseTrainer:
     def get_score_checkpoint(self, epoch, val_loss):
         """Retrieves the path to a checkpoint file."""
         name = f"model_{epoch}_score={val_loss:4f}.pth"
-        return os.path.join(self.cfg.PATH.MODEL_OUT_DIR, name)
+        return os.path.join(self.out_name, name)
 
     def save_checkpoint(self, epoch, val_loss):
         """Saves a checkpoint."""
@@ -126,8 +127,8 @@ class BaseTrainer:
     def plot_training_curve(self):
         
         # Get save path
-        loss_fig_save_path = os.path.join(self.cfg.PATH.MODEL_OUT_DIR, "training_losses.png")
-        comp_fig_save_path = os.path.join(self.cfg.PATH.MODEL_OUT_DIR, "comparison.png")
+        loss_fig_save_path = os.path.join(self.out_name, "training_losses.png")
+        comp_fig_save_path = os.path.join(self.out_name, "comparison.png")
         cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
         
         min_loss_at = np.argmin(np.array(self.validation_metrics["factual_mae"]))

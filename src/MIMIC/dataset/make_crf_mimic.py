@@ -28,12 +28,28 @@ def pad_x_sequence_along_diagnoses(seq: list, max_diagnosis_length: int, padding
 
     return torch.LongTensor(padded_vector_along_diagnoses)
 
-def simulate_outcome(beta0, beta1, gamma, confounder, treatment, setting):
+def simulate_outcome(beta0, beta1, gamma, confounder, treatment, outcome, setting):
+    """
+    Args: 
+      beta0: treatment strength
+      beta1: confounder strength
+      gamma: noise level
+      outcome: factual outcome. For binary setting, this is the mortality flag
+    Returns:
+      y0, y1, yf
+    """
     
+    no = confounder.shape[0]
+    p0 = expit(beta1*confounder)
+    p1 = expit(beta0 + beta1*confounder)
+    print(no)
     # Simulate potential outcomes
     if setting == 'binary':
         y0 = bernoulli.rvs(expit(beta1*confounder))
         y1 = bernoulli.rvs(expit(beta0 + beta1*confounder))
+        print(p0.reshape(no).shape)
+        y0 = np.random.binomial(1, p0, (no,))
+        y1 = np.random.binomial(1, p1, (no,))
         print(y0.shape)
     elif setting == 'continuous':
         y0 = beta1*confounder + random.normal(0, gamma)
@@ -49,13 +65,13 @@ def simulate_outcome(beta0, beta1, gamma, confounder, treatment, setting):
     
     return y0, y1, yf
 
-def make_cfr_mimic(beta0, beta1, gamma, setting, max_diag_length_per_visit = 66):
+def make_cfr_mimic(data_dir, beta0, beta1, gamma, setting, max_diag_length_per_visit = 66):
     '''
     Creates loaders for MIMIC dataset.
     '''
     
     # Load data
-    data_dir =  f'../../../data/mimic/processed/sequential_mimic.csv'
+    data_dir =  data_dir + 'sequential_mimic.csv'
     data = pd.read_csv(data_dir)
     
     # Define treatment and confounders
@@ -100,21 +116,3 @@ def make_cfr_mimic(beta0, beta1, gamma, setting, max_diag_length_per_visit = 66)
     y0, y1, yf = simulate_outcome(beta0, beta1, gamma, avg_age, treatment, setting)
     
     return x_diag, x_age, gender, treatment, y0, y1, yf
-
-def make_cfr_mnist(beta0, beta1, gamma, setting):
-    '''
-    Creates loaders for MNIST dataset.
-    '''
-    
-    # Load data
-    data_dir =  '../../../data/mnist/processed/mnist-cfr.npz'
-    data = np.load(data_dir)
-    
-    xs_1 = data['xs_1']
-    xs_2 = data['xs_2']
-    xs_3 = data['xs_3']
-    t = data['t']
-    z = data['confounder']
-    
-    y0, y1, yf = simulate_outcome(beta0, beta1, gamma, z, t, setting)
-    return xs_1, xs_2, xs_3, t, z, y0, y1, yf

@@ -21,7 +21,7 @@ class MNIST_Transformer(nn.Module):
         
         self.embedding = nn.Embedding(vocab_size, cfg.MODEL.EMBEDDING_DIM)
 
-        encoder_layer = nn.TransformerEncoderLayer(d_model = cfg.MODEL.EMBEDDING_DIM, nhead= 4)
+        encoder_layer = nn.TransformerEncoderLayer(d_model = cfg.MODEL.EMBEDDING_DIM, nhead= cfg.MODEL.ATTENTION_HEADS)
         self.transformer = nn.TransformerEncoder(
             encoder_layer,
             num_layers = cfg.MODEL.TRANS_DEPTH,

@@ -25,6 +25,9 @@ _C.SIM.BIAS_RATE = 0.2
 
 _C.SIM.TREATMENT_STRENGTH = 0.2
 _C.SIM.CONFOUNDER_STRENGTH = 0.2
+
+# Potential output type. Possible values: binary, continuous
+_C.SIM.OUTPUT_TYPE = 'binary'
 # ---------------------------------------------------------------------------- #
 # Model options
 # ---------------------------------------------------------------------------- #
@@ -32,7 +35,7 @@ _C.MODEL = CN()
 
 # Model type
 _C.MODEL.NAME = "trans"
-
+_C.MODEL.EXP_NAME = "exp0"
 _C.MODEL.EMBEDDING_DIM = 300
 _C.MODEL.DROPOUT_P = 0.0
 _C.MODEL.ENCODER_NUM_LAYER = 2
@@ -51,7 +54,7 @@ _C.MODEL.MAX_SEQ_LENGTH = 66
 _C.MODEL.MAX_VISIT_LENGTH = 20
 
 # Transformer Params
-_C.MODEL.NUM_HEADS = 8
+_C.MODEL.ATTENTION_HEADS = 8
 _C.MODEL.TRANS_DEPTH = 2
 
 # ---------------------------------------------------------------------------- #
@@ -63,14 +66,15 @@ _C.TRAIN.EPOCHS = 20
 _C.TRAIN.LR = 1e-3
 _C.TRAIN.WEIGHT_DECAY = 1e-4
 _C.TRAIN.BATCH_SIZE = 16
-
+_C.TRAIN.VALIDATION_SPLIT = 0.2
+_C.TRAIN.GRAD_CLIP_T = 1.
 # ---------------------------------------------------------------------------- #
 # Path options
 # ---------------------------------------------------------------------------- #
 _C.PATH = CN()
-_C.PATH.ROOT = "results/" + _C.MODEL.NAME
-_C.PATH.HOME_DIR = "../"
-_C.PATH.MODEL_OUT_DIR = _C.PATH.HOME_DIR + _C.PATH.ROOT
+_C.PATH.ROOT = "/scratch/work/luongn1/transformer-cfr/"
+_C.PATH.RESULT = "results/"
+_C.PATH.MODEL_OUT_DIR = _C.PATH.ROOT + _C.PATH.RESULT + _C.MODEL.NAME 
 
 # ---------------------------------------------------------------------------- #
 # Utils options

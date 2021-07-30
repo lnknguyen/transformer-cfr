@@ -1,0 +1,23 @@
+PATH:
+  RESULT: /scratch/work/luongn1/transformer-cfr/results
+  MODEL_OUT_DIR: /scratch/work/luongn1/transformer-cfr/results/mnist_trans
+SIM:
+  INPUT_NOISE: 0.2
+  OUTPUT_NOISE: 0.1
+  TREATMENT_STRENGTH: 0.25
+  CONFOUNDER_STRENGTH: 5.0
+  OUTPUT_TYPE: 'binary'
+MODEL:
+  VOCAB_SIZE: 258
+  EMBEDDING_DIM: 128
+  FC_HIDDEN_SIZE: 32
+  TRANS_DEPTH: 2
+  ATTENTION_HEADS: 16
+  NAME: "mnist_trans"
+  DROPOUT_P: 0.5
+TRAIN:
+  LR: 1e-4
+  EPOCHS: 25
+  WEIGHT_DECAY: 0.0001
+  GRAD_CLIP_T: 1.
+  VALIDATION_SPLIT: 0.2
