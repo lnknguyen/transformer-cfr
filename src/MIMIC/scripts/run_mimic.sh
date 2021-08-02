@@ -1,0 +1,1 @@
+#srun --gres=gpu:1 --time=01:30:00 --mem=8G python3 run_mimic.py

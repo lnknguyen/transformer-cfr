@@ -2,16 +2,15 @@ PATH:
   RESULT: /scratch/work/luongn1/transformer-cfr/results
   MODEL_OUT_DIR: /scratch/work/luongn1/transformer-cfr/results/mimic_trans
 SIM:
-  INPUT_NOISE: 0.2
   OUTPUT_NOISE: 0.1
   TREATMENT_STRENGTH: 0.25
-  CONFOUNDER_STRENGTH: 5.0
+  CONFOUNDER_STRENGTH: 10.0
   OUTPUT_TYPE: 'binary'
 MODEL:
   VOCAB_SIZE: 3448
   EMBEDDING_DIM: 500
   FC_HIDDEN_SIZE: 32
-  TRANS_DEPTH: 4
+  TRANS_DEPTH: 2
   ATTENTION_HEADS: 16
   NAME: "mimic_trans"
   DROPOUT_P: 0.5

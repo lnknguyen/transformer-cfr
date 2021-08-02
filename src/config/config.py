@@ -68,6 +68,7 @@ _C.TRAIN.WEIGHT_DECAY = 1e-4
 _C.TRAIN.BATCH_SIZE = 16
 _C.TRAIN.VALIDATION_SPLIT = 0.2
 _C.TRAIN.GRAD_CLIP_T = 1.
+
 # ---------------------------------------------------------------------------- #
 # Path options
 # ---------------------------------------------------------------------------- #
@@ -75,6 +76,7 @@ _C.PATH = CN()
 _C.PATH.ROOT = "/scratch/work/luongn1/transformer-cfr/"
 _C.PATH.RESULT = "results/"
 _C.PATH.MODEL_OUT_DIR = _C.PATH.ROOT + _C.PATH.RESULT + _C.MODEL.NAME 
+_C.PATH.MIMIC_DATA_DIR = "/scratch/work/luongn1/transformer-cfr/data/mimic/processed/sequential_mimic.csv"
 
 # ---------------------------------------------------------------------------- #
 # Utils options

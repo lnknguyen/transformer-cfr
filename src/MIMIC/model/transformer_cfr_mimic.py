@@ -4,7 +4,7 @@ sys.path.append("../")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from blocks import EmbeddingAdder
+from utils.blocks import EmbeddingAdder
 
 '''
 3-head architecture: treatment and potential outcomes y_0 y_1
@@ -25,7 +25,6 @@ class MIMIC_Transformer(nn.Module):
                                        padding_idx=padding_idx)
         
         self.gender_embed = nn.Embedding(num_embeddings = 2, embedding_dim=1)
-        self.age_embed = nn.Embedding(num_embeddings = 3, embedding_dim=1)
         
         encoder_layer = nn.TransformerEncoderLayer(d_model = cfg.MODEL.EMBEDDING_DIM + 2, nhead= 2)
         
@@ -63,7 +62,6 @@ class MIMIC_Transformer(nn.Module):
         batch_size, max_seq_length, _ = x_diag.shape
         
         # Embeddings
-        print(x_diag.shape)
         x_embed = self.diag_embed(x_diag)
 
         x_gender = (
@@ -72,14 +70,10 @@ class MIMIC_Transformer(nn.Module):
             .expand(batch_size, max_seq_length, -1)
         )
 
-        x_age = (
-            self.age_embed(x_age)
-            .unsqueeze(1)
-            .expand(batch_size, max_seq_length, -1)
-        )
+        x_age =  x_age.unsqueeze(1).expand(batch_size, max_seq_length, -1)
         
         # Summing embedded values 
-        x_embed_sum = self.embed_sum(x_embed)
+        x_embed_sum = self.embedding_adder(x_embed)
         x_embed_sum = torch.cat([x_embed_sum, x_gender, x_age],dim=2)
         
         x_trans = self.transformer(x_embed_sum)
@@ -90,8 +84,8 @@ class MIMIC_Transformer(nn.Module):
         yf_pred =  torch.where(t == 0, y0_pred, y1_pred)
         t_logits = self.tr_fc(x_seq).view(-1)
             
-        t_loss = self.bce_loss_fn(yf_pred, t)
-        factual_loss = self.bce_loss_fn(d_preds, yf)
+        t_loss = self.bce_loss_fn(t_logits, t)
+        factual_loss = self.bce_loss_fn(yf_pred, yf)
 
         loss =  t_loss + factual_loss
         
