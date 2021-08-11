@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 import torch
 
-from data.prepare_cfr_dataset import make_cfr_mnist
+from dataset.make_cfr_mnist import make_cfr_mnist
 
 torch.manual_seed(1)
 device = "cpu"
@@ -18,7 +18,7 @@ def get_mnist_cfr_loaders(cfg, batch_size, num_workers = 1, device = device):
     '''
     Return context X, treatment T, factual outcome yf and potential outcomes y_0 ... y_n from context with noise
     '''
-    xs_1, xs_2, xs_3, t, z, y0, y1, yf = make_cfr_mnist(cfg.SIM.TREATMENT_STRENGTH,
+    xs_1, xs_2, xs_3, t, y0, y1, yf = make_cfr_mnist(cfg.SIM.TREATMENT_STRENGTH,
                                                         cfg.SIM.CONFOUNDER_STRENGTH,
                                                         cfg.SIM.OUTPUT_NOISE,
                                                         cfg.SIM.OUTPUT_TYPE)
@@ -31,7 +31,6 @@ def get_mnist_cfr_loaders(cfg, batch_size, num_workers = 1, device = device):
     xs_2 = torch.LongTensor(xs_2)
     xs_3 = torch.LongTensor(xs_3)
     t = torch.FloatTensor(t)
-    z = torch.FloatTensor(z)
     yf = torch.FloatTensor(yf)
     y0 = torch.FloatTensor(y0)
     y1 = torch.FloatTensor(y1)
@@ -52,7 +51,6 @@ def get_mnist_cfr_loaders(cfg, batch_size, num_workers = 1, device = device):
         xs_2[train_indices],
         xs_3[train_indices],
         t[train_indices],
-        z[train_indices],
         yf[train_indices],
         y0[train_indices],
         y1[train_indices]
@@ -63,7 +61,6 @@ def get_mnist_cfr_loaders(cfg, batch_size, num_workers = 1, device = device):
         xs_2[valid_indices],
         xs_3[valid_indices],
         t[valid_indices],
-        z[valid_indices],
         yf[valid_indices],
         y0[valid_indices],
         y1[valid_indices]
@@ -74,7 +71,6 @@ def get_mnist_cfr_loaders(cfg, batch_size, num_workers = 1, device = device):
         xs_2[test_indices],
         xs_3[test_indices],
         t[test_indices],
-        z[test_indices],
         yf[test_indices],
         y0[test_indices],
         y1[test_indices]

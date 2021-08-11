@@ -4,7 +4,7 @@ sys.path.append("../")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from blocks import EmbeddingAdder
+from utils.blocks import EmbeddingAdder
 
 '''
 3-head architecture: treatment and potential outcomes y_0 y_1
@@ -19,6 +19,7 @@ class MNIST_Transformer(nn.Module):
         
         super().__init__()
         
+        self.cfg = cfg
         self.embedding = nn.Embedding(vocab_size, cfg.MODEL.EMBEDDING_DIM)
 
         encoder_layer = nn.TransformerEncoderLayer(d_model = cfg.MODEL.EMBEDDING_DIM, nhead= cfg.MODEL.ATTENTION_HEADS)
@@ -35,7 +36,7 @@ class MNIST_Transformer(nn.Module):
         self.y0_fc = nn.Sequential(
             nn.Linear(cfg.MODEL.EMBEDDING_DIM, cfg.MODEL.FC_HIDDEN_SIZE),
             nn.BatchNorm1d(cfg.MODEL.FC_HIDDEN_SIZE),
-            nn.Dropout(0.1),
+            nn.Dropout(cfg.MODEL.DROPOUT_P),
             nn.ReLU(),
             nn.Linear(cfg.MODEL.FC_HIDDEN_SIZE, 1)
         )
@@ -43,13 +44,14 @@ class MNIST_Transformer(nn.Module):
         self.y1_fc = nn.Sequential(
             nn.Linear(cfg.MODEL.EMBEDDING_DIM, cfg.MODEL.FC_HIDDEN_SIZE),
             nn.BatchNorm1d(cfg.MODEL.FC_HIDDEN_SIZE),
-            nn.Dropout(0.1),
+            nn.Dropout(cfg.MODEL.DROPOUT_P),
             nn.ReLU(),
             nn.Linear(cfg.MODEL.FC_HIDDEN_SIZE, 1)
         )
         
         self.tr_fc = nn.Linear(cfg.MODEL.EMBEDDING_DIM, 1) # treatment
         self.bce_loss_fn = nn.BCEWithLogitsLoss() #
+        self.mse_loss = nn.MSELoss()
         
     def forward(self, xs_1,xs_2, xs_3, t, yf):
 
@@ -76,9 +78,13 @@ class MNIST_Transformer(nn.Module):
         t_logits = self.tr_fc(x_seq).view(-1)
 
         yf_pred =  torch.where(t == 0, y0_pred, y1_pred)
-
         t_loss = self.bce_loss_fn(t_logits, t)
-        y_loss = self.bce_loss_fn(yf_pred, yf)
+        
+        if self.cfg.SIM.OUTPUT_TYPE == 'binary':
+            y_loss = self.bce_loss_fn(yf_pred, yf)
+        else:
+            y_loss = self.mse_loss(yf_pred, yf)
+            
         loss = t_loss + y_loss
         
         return (

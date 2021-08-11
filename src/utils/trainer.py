@@ -1,7 +1,6 @@
 import sys
 sys.path.append("../")
 
-
 import torch
 import torch.nn as nn
 import numpy as np
@@ -10,6 +9,11 @@ import torch.optim as optim
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+from utils.early_stopping import EarlyStopping
+
+from sklearn.metrics import accuracy_score, mean_absolute_error, log_loss
+import pandas as pd
+import json
 
 class BaseTrainer:
 
@@ -43,15 +47,34 @@ class BaseTrainer:
         # names of the variables that we will keep track of
         # during training and validation
         self.track_metric_names = [
-            "loss", "absATE", "absATT", "pehe", "factual_mae", "ite_true", "ite_pred"
+            "loss", "absATE", "absATT", "pehe", "ite_true", "ite_pred"
         ]
+
+        if self.cfg.SIM.OUTPUT_TYPE == 'binary':
+            self.track_metric_names.append("factual_ce")
+        else:
+            self.track_metric_names.append("factual_mae")
 
         self.training_metrics = {k: [] for k in self.track_metric_names}
         self.validation_metrics = {k: [] for k in self.track_metric_names}
 
     def _init_save_path(self):
-
-        self.out_name = os.path.join(self.cfg.PATH.MODEL_OUT_DIR, self.cfg.UTILS.TIMESTAMP)
+        
+        if self.model_name == "mimic_trans":
+            config_summary = "lr_{}_layer_{}_dropoutp_{}_bs_{}_hiddensz_{}_embeddim_{}".format(self.cfg.TRAIN.LR,
+                                                                                               self.cfg.MODEL.DROPOUT_P,
+                                                                                               self.cfg.MODEL.LSTM_NUM_LAYER,
+                                                                                               self.cfg.TRAIN.BATCH_SIZE,
+                                                                                               self.cfg.MODEL.LSTM_HIDDEN_SIZE,
+                                                                                               self.cfg.MODEL.EMBEDDING_DIM)
+        else:
+            config_summary = "lr_{}_dropout_{}_layer_{}_bs_{}_embedddim_{}".format(self.cfg.TRAIN.LR,
+                                                                                   self.cfg.MODEL.DROPOUT_P,
+                                                                                   self.cfg.MODEL.TRANS_DEPTH,
+                                                                                   self.cfg.TRAIN.BATCH_SIZE,
+                                                                                   self.cfg.MODEL.EMBEDDING_DIM)
+                
+        self.out_name = os.path.join(self.cfg.PATH.MODEL_OUT_DIR, self.cfg.UTILS.TIMESTAMP, config_summary)
         if not os.path.exists(self.out_name):
             os.makedirs(self.out_name)
             
@@ -91,7 +114,7 @@ class BaseTrainer:
 
     def get_best_score_checkpoint(self):
         """Retrieves the checkpoint with lowest loss score."""
-        checkpoint_dir = self.cfg.PATH.MODEL_OUT_DIR
+        checkpoint_dir = self.out_name
         # Checkpoint file names are in lexicographic order
         checkpoints = [f for f in os.listdir(checkpoint_dir) if ".pth" in f]
         best_checkpoint_val_loss = [
@@ -131,7 +154,12 @@ class BaseTrainer:
         comp_fig_save_path = os.path.join(self.out_name, "comparison.png")
         cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
         
-        min_loss_at = np.argmin(np.array(self.validation_metrics["factual_mae"]))
+        if self.cfg.SIM.OUTPUT_TYPE == 'binary':
+            factual_loss = self.validation_metrics["factual_ce"]
+        else:
+            factual_loss = self.validation_metrics["factual_mae"]
+            
+        min_loss_at = np.argmin(np.array(factual_loss))
         min_abs_ate_at = np.argmin(np.array(self.validation_metrics["absATE"]))
         min_pehe_at = np.argmin(np.array(self.validation_metrics["pehe"]))
         min_abs_att_at = np.argmin(np.array(self.validation_metrics["absATT"]))
@@ -152,52 +180,51 @@ class BaseTrainer:
         x_grid = np.arange(len(self.validation_metrics["absATE"]))
 
         # 1. plot factual mae vs absATE
-        lns1 = sns.lineplot(x_grid, self.validation_metrics["factual_mae"], ax=ax1.flat[0], marker="o", color=cycle[0], label='Factual MAE')
+        lns1 = sns.lineplot(x_grid, factual_loss, ax=ax1.flat[0], marker="o", color=cycle[0], label='Factual loss')
         ax1.flat[0].axvline(min_loss_at, color=cycle[0], linestyle="--")
         ax1.flat[0].set_xlabel('Epochs')
-        ax1.flat[0].set_ylabel('Factual MAE')
+        ax1.flat[0].set_ylabel('Factual loss')
 
         ax1_0 = ax1.flat[0].twinx()
         lns2 = sns.lineplot(x_grid, self.validation_metrics["absATE"], ax=ax1_0, marker="o", color=cycle[1], label='Abs. ATE')
         ax1_0.axvline(min_abs_ate_at, color=cycle[1], linestyle="--")
         ax1_0.set_ylabel('Abs ATE')
 
-        ax1.flat[0].set_title('Validation Losses: Factual MAE and Abs. ATE')
+        ax1.flat[0].set_title('Validation Losses: Factual Loss and Abs. ATE')
         leg = lns1.get_lines() + lns2.get_lines()
         labs = [l.get_label() for l in leg]
         ax1.flat[0].legend(leg, labs, loc=7)
         ax1_0.get_legend().remove()
 
-
         # 2. plot factual mae vs pehe
-        lns1 = sns.lineplot(x=x_grid, y=self.validation_metrics["factual_mae"], ax=ax1.flat[1], color=cycle[0], marker="o", label='Factual MAE')
+        lns1 = sns.lineplot(x=x_grid, y= factual_loss, ax=ax1.flat[1], color=cycle[0], marker="o", label='Factual loss')
         ax1.flat[1].axvline(min_loss_at, color=cycle[0], linestyle="--")
         ax1.flat[1].set_xlabel('Epochs')
-        ax1.flat[1].set_ylabel('Factual MAE')
+        ax1.flat[1].set_ylabel('Factual loss')
 
         ax1_1 = ax1.flat[1].twinx()
         lns2 = sns.lineplot(x=x_grid, y=self.validation_metrics["pehe"], ax=ax1_1, marker="o", color=cycle[1], label='PEHE')
         ax1_1.axvline(min_pehe_at, color=cycle[1], linestyle="--")
         ax1_1.set_ylabel('PEHE')
 
-        ax1.flat[1].set_title('Validation Losses: Factual MAE and PEHE')
+        ax1.flat[1].set_title('Validation Losses: Factual Loss and PEHE')
         leg = lns1.get_lines() + lns2.get_lines()
         labs = [l.get_label() for l in leg]
         ax1.flat[1].legend(leg, labs, loc=7)
         ax1_1.get_legend().remove()
         
         # 3. plot factual mae vs ATT
-        lns1 = sns.lineplot(x_grid, self.validation_metrics["factual_mae"], ax=ax1.flat[2], marker="o", color=cycle[0], label='Factual MAE')
+        lns1 = sns.lineplot(x_grid, factual_loss, ax=ax1.flat[2], marker="o", color=cycle[0], label='Factual loss')
         ax1.flat[2].axvline(min_loss_at, color=cycle[0], linestyle="--")
         ax1.flat[2].set_xlabel('Epochs')
-        ax1.flat[2].set_ylabel('Factual MAE')
+        ax1.flat[2].set_ylabel('Factual loss')
 
         ax1_2 = ax1.flat[2].twinx()
         lns2 = sns.lineplot(x_grid, self.validation_metrics["absATT"], ax=ax1_2, marker="o", color=cycle[1], label='Abs. ATT')
         ax1_2.axvline(min_abs_att_at, color=cycle[1], linestyle="--")
         ax1_2.set_ylabel('ATT')
 
-        ax1.flat[2].set_title('Validation Losses: Factual MAE and Abs. ATT')
+        ax1.flat[2].set_title('Validation Losses: Factual Loss and Abs. ATT')
         leg = lns1.get_lines() + lns2.get_lines()
         labs = [l.get_label() for l in leg]
         ax1.flat[2].legend(leg, labs, loc=7)
@@ -208,7 +235,6 @@ class BaseTrainer:
     def fit(self):
        
         #TODO: move to config
-
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.cfg.TRAIN.LR, weight_decay=self.cfg.TRAIN.WEIGHT_DECAY)
         self.scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, T_0=5, eta_min=1e-5)
         best_loss = float("inf")
@@ -217,6 +243,8 @@ class BaseTrainer:
         self._init_validation_metrics()
         self._init_save_path()
 
+        early_stopping = EarlyStopping()
+        
         for epoch in range(1, self.cfg.TRAIN.EPOCHS + 1):
             print(f"running epoch {epoch}")
             self.scheduler.step()
@@ -235,11 +263,41 @@ class BaseTrainer:
                 best_loss = val_loss
                 self.save_checkpoint(epoch, val_loss)
                 
+            early_stopping(val_epoch_metrics["loss"])
+            if early_stopping.early_stop:
+                break
+
         self.plot_training_curve()
 #        self.save_val_metrics()
         print(self.validation_metrics)
         
+    def save_metrics(self, metrics):
+        '''
+        Save run results. 
+        '''
+        save_path = os.path.join(self.out_name, "results.txt")
+    
+        with open(save_path, 'w') as file:
+             file.write(json.dumps(metrics)) # use `json.loads` to do the reverse
 
+    def predict(self):
+        '''
+        Load the best checkpoint and run inference on test data. Save result afterwards.
+        '''
+        print("="*100)
+        best_epoch = self.load_best_score_checkpoint()
+        print(f"loaded model from epoch: {best_epoch}")
+
+        test_epoch_metrics = self.run_epoch("test")
+
+        print_str = f"test result:"
+        for k, v in test_epoch_metrics.items():
+            print_str += f"{k}: {v:.5f} "
+
+        print(print_str)
+            
+        self.save_metrics(test_epoch_metrics)
+        return test_epoch_metrics
 '''
 Trainer class for MNIST dataset
 '''
@@ -254,10 +312,9 @@ class TrainerMNIST(BaseTrainer):
         xs_2 = batch_data[1].to(self.device)
         xs_3 = batch_data[2].to(self.device)
         t = batch_data[3].to(self.device)
-        #z = batch_data[4].to(self.device)
-        yf = batch_data[5].to(self.device)
-        y0 = batch_data[6].to(self.device)
-        y1 = batch_data[7].to(self.device)
+        yf = batch_data[4].to(self.device)
+        y0 = batch_data[5].to(self.device)
+        y1 = batch_data[6].to(self.device)
         
         return xs_1, xs_2, xs_3, t, yf, y0, y1
 
@@ -285,7 +342,7 @@ class TrainerMNIST(BaseTrainer):
                 loss, yf_pred, y0_pred, y1_pred, t_logits = self.model(xs_1, xs_2, xs_3, t, yf)
             
                 t_pred = torch.round(torch.sigmoid(t_logits))
-
+                
                 loss = (
                     loss.mean()
                 )  
@@ -303,7 +360,7 @@ class TrainerMNIST(BaseTrainer):
                     self.model.zero_grad()
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(
-                        self.model.parameters(), 0.5
+                        self.model.parameters(), 2
                     )
 
                     self.optimizer.step()
@@ -349,7 +406,7 @@ class TrainerMNIST(BaseTrainer):
             pred_att = (y1_pred_treated - y0_pred_treated)
             true_att = (y1_true_treated - y0_true_treated)
 
-            epoch_metrics["factual_mae"] = (yf_true - yf_pred).mean()
+            epoch_metrics["factual_mae"] = mean_absolute_error(yf_true, yf_pred)
 
             epoch_metrics["loss"] = float(np.mean(losses))
             ite_true = self.log_variables["y1_trues"] - self.log_variables["y0_trues"]
@@ -426,6 +483,11 @@ class TrainerMIMIC(BaseTrainer):
                 )  
                 losses.append(loss.item())
 
+                if self.cfg.SIM.OUTPUT_TYPE == 'binary':
+                    y0_pred = torch.sigmoid(y0_pred)
+                    y1_pred = torch.sigmoid(y1_pred)
+                    yf_pred = torch.sigmoid(yf_pred)
+                
                 self.log_variables["y0_trues"].extend(y0.cpu().detach().numpy().tolist())
                 self.log_variables["y0_preds"].extend(y0_pred.cpu().detach().numpy().tolist())
                 self.log_variables["y1_trues"].extend(y1.cpu().detach().numpy().tolist())
@@ -484,7 +546,10 @@ class TrainerMIMIC(BaseTrainer):
             pred_att = (y1_pred_treated - y0_pred_treated)
             true_att = (y1_true_treated - y0_true_treated)
 
-            epoch_metrics["factual_mae"] = (yf_true - yf_pred).mean()
+            if self.cfg.SIM.OUTPUT_TYPE == 'binary':
+                epoch_metrics["factual_ce"] = log_loss(yf_true, yf_pred)
+            else:
+                epoch_metrics["factual_mae"] = mean_absolute_error(yf_true, yf_pred)
 
             epoch_metrics["loss"] = float(np.mean(losses))
             ite_true = self.log_variables["y1_trues"] - self.log_variables["y0_trues"]
@@ -499,8 +564,7 @@ class TrainerMIMIC(BaseTrainer):
             epoch_metrics["pehe"] = np.sqrt(np.mean(np.square((ite_true) - (ite_pred))))
             epoch_metrics["absATE"] = np.abs(np.mean(ite_true) - np.mean(ite_pred))
             epoch_metrics["absATT"] = np.abs(np.mean(pred_att - true_att))
-            
-            epoch_metrics["loss"] = float(np.mean(losses))            
+                       
             print_str = f"{split} epoch: {epoch_count}\t "
             for k, v in epoch_metrics.items():
                 print_str += f"{k}: {v:.5f} "

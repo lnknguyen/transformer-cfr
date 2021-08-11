@@ -26,7 +26,7 @@ class MIMIC_Transformer(nn.Module):
         
         self.gender_embed = nn.Embedding(num_embeddings = 2, embedding_dim=1)
         
-        encoder_layer = nn.TransformerEncoderLayer(d_model = cfg.MODEL.EMBEDDING_DIM + 2, nhead= 2)
+        encoder_layer = nn.TransformerEncoderLayer(d_model = cfg.MODEL.EMBEDDING_DIM + 2, nhead= cfg.MODEL.ATTENTION_HEADS)
         
         self.transformer = nn.TransformerEncoder(
             encoder_layer,

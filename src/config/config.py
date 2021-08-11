@@ -38,11 +38,17 @@ _C.MODEL.NAME = "trans"
 _C.MODEL.EXP_NAME = "exp0"
 _C.MODEL.EMBEDDING_DIM = 300
 _C.MODEL.DROPOUT_P = 0.0
-_C.MODEL.ENCODER_NUM_LAYER = 2
+
+# Transformer params
+_C.MODEL.TRANS_DEPTH = 2
+_C.MODEL.ENCODER_HIDDEN_SIZE = 128
+
+# LSTM params
+_C.MODEL.LSTM_NUM_LAYER = 2
+_C.MODEL.LSTM_HIDDEN_SIZE = 64
 
 # Number of unique diagnosis + procedure codes
-_C.MODEL.DIAG_VOCAB_SIZE = 3448
-_C.MODEL.VOCAB_SIZE = 258
+_C.MODEL.VOCAB_SIZE = 3448
 
 _C.MODEL.N_OUT_CLASSES = 2
 _C.MODEL.FC_HIDDEN_SIZE = 16
@@ -55,14 +61,13 @@ _C.MODEL.MAX_VISIT_LENGTH = 20
 
 # Transformer Params
 _C.MODEL.ATTENTION_HEADS = 8
-_C.MODEL.TRANS_DEPTH = 2
 
 # ---------------------------------------------------------------------------- #
 # TRAIN options
 # ---------------------------------------------------------------------------- #
 _C.TRAIN = CN()
 
-_C.TRAIN.EPOCHS = 20
+_C.TRAIN.EPOCHS = 1
 _C.TRAIN.LR = 1e-3
 _C.TRAIN.WEIGHT_DECAY = 1e-4
 _C.TRAIN.BATCH_SIZE = 16
