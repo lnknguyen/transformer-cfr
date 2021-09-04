@@ -1,0 +1,28 @@
+[0m2021.08.24 23:40:20 INFO  Started: Metals version 0.10.5 in workspace '/Volumes/luongn1/transformer-cfr' for client Visual Studio Code 1.52.1.[0m
+[0m2021.08.24 23:40:26 INFO  time: initialize in 7.37s[0m
+[0m2021.08.24 23:40:49 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.24 23:40:49 WARN  no build tool detected in workspace '/Volumes/luongn1/transformer-cfr'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.08.25 22:17:17 INFO  Started: Metals version 0.10.5 in workspace '/Volumes/luongn1/transformer-cfr' for client Visual Studio Code 1.52.1.[0m
+[0m2021.08.25 22:17:22 INFO  time: initialize in 4.89s[0m
+[0m2021.08.25 22:17:48 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.25 22:17:48 WARN  no build tool detected in workspace '/Volumes/luongn1/transformer-cfr'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.08.26 18:23:42 INFO  Started: Metals version 0.10.5 in workspace '/Volumes/luongn1/transformer-cfr' for client Visual Studio Code 1.52.1.[0m
+[0m2021.08.26 18:23:47 INFO  time: initialize in 5.31s[0m
+[0m2021.08.26 18:24:13 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.26 18:24:13 WARN  no build tool detected in workspace '/Volumes/luongn1/transformer-cfr'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.08.27 18:27:28 INFO  Started: Metals version 0.10.5 in workspace '/Volumes/luongn1/transformer-cfr' for client Visual Studio Code 1.52.1.[0m
+[0m2021.08.27 18:27:33 INFO  time: initialize in 6.39s[0m
+[0m2021.08.27 18:28:01 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.27 18:28:01 WARN  no build tool detected in workspace '/Volumes/luongn1/transformer-cfr'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.08.28 12:27:59 INFO  Started: Metals version 0.10.5 in workspace '/Volumes/luongn1/transformer-cfr' for client Visual Studio Code 1.52.1.[0m
+[0m2021.08.28 12:28:07 INFO  time: initialize in 11s[0m
+[0m2021.08.28 12:28:44 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.28 12:28:44 WARN  no build tool detected in workspace '/Volumes/luongn1/transformer-cfr'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.08.29 19:01:14 INFO  Started: Metals version 0.10.5 in workspace '/Volumes/luongn1/transformer-cfr' for client Visual Studio Code 1.52.1.[0m
+[0m2021.08.29 19:01:21 INFO  time: initialize in 12s[0m
+[0m2021.08.29 19:01:52 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.29 19:01:52 WARN  no build tool detected in workspace '/Volumes/luongn1/transformer-cfr'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.08.30 21:59:15 INFO  Started: Metals version 0.10.5 in workspace '/Volumes/luongn1/transformer-cfr' for client Visual Studio Code 1.52.1.[0m
+[0m2021.08.30 21:59:22 INFO  time: initialize in 9.61s[0m
+[0m2021.08.30 21:59:49 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.30 21:59:49 WARN  no build tool detected in workspace '/Volumes/luongn1/transformer-cfr'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m

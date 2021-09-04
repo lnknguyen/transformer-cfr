@@ -13,6 +13,29 @@ device = "cpu"
 if torch.cuda.is_available():
     device = torch.cuda.current_device()
 
+def get_mnist_dataset(cfg, batch_size, num_workers = 1, device = device):
+    '''
+    Return context X, treatment T, factual outcome yf and potential outcomes y_0 ... y_n from context with noise
+    '''
+    xs_1, xs_2, xs_3, t, y0, y1, yf = make_cfr_mnist(cfg.SIM.TREATMENT_STRENGTH,
+                                                        cfg.SIM.CONFOUNDER_STRENGTH,
+                                                        cfg.SIM.OUTPUT_NOISE,
+                                                        cfg.SIM.OUTPUT_TYPE)
+
+    print("1s:", sum(t) / len(t))
+    print("y0s:", sum(y0) / len(y0))
+    print("y1s:", sum(y1) / len(y1))
+    # MNIST
+    xs_1 = torch.LongTensor(xs_1)
+    xs_2 = torch.LongTensor(xs_2)
+    xs_3 = torch.LongTensor(xs_3)
+    t = torch.FloatTensor(t)
+    yf = torch.FloatTensor(yf)
+    y0 = torch.FloatTensor(y0)
+    y1 = torch.FloatTensor(y1)
+
+    return TensorDataset(xs_1, xs_2, xs_3, t, yf, y0, y1)
+    
 def get_mnist_cfr_loaders(cfg, batch_size, num_workers = 1, device = device):
 
     '''

@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from utils.blocks import EmbeddingAdder
+from utils.loss_func import lindisc, wass
 
 '''
 3-head architecture: treatment and potential outcomes y_0 y_1
@@ -34,14 +35,17 @@ class MNIST_Transformer(nn.Module):
         )
 
         self.y0_fc = nn.Sequential(
+
             nn.Linear(cfg.MODEL.EMBEDDING_DIM, cfg.MODEL.FC_HIDDEN_SIZE),
             nn.BatchNorm1d(cfg.MODEL.FC_HIDDEN_SIZE),
             nn.Dropout(cfg.MODEL.DROPOUT_P),
             nn.ReLU(),
+
             nn.Linear(cfg.MODEL.FC_HIDDEN_SIZE, 1)
         )
 
         self.y1_fc = nn.Sequential(
+
             nn.Linear(cfg.MODEL.EMBEDDING_DIM, cfg.MODEL.FC_HIDDEN_SIZE),
             nn.BatchNorm1d(cfg.MODEL.FC_HIDDEN_SIZE),
             nn.Dropout(cfg.MODEL.DROPOUT_P),
@@ -85,8 +89,12 @@ class MNIST_Transformer(nn.Module):
         else:
             y_loss = self.mse_loss(yf_pred, yf)
             
-        loss = t_loss + y_loss
+        #t_loss = lindisc(x_seq.cpu().detach().numpy(),0.5, t.cpu().detach().numpy())
+        #t_loss = wass(x_seq.cpu().detach().numpy(), t.cpu().detach().numpy())
         
+        reg_lambda = 1e-2
+        loss = t_loss + reg_lambda* y_loss
+
         return (
             loss,
             yf_pred,
@@ -94,3 +102,5 @@ class MNIST_Transformer(nn.Module):
             y1_pred,
             t_logits
         )
+
+

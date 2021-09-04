@@ -1,0 +1,23 @@
+PATH:
+  RESULT: /scratch/work/luongn1/transformer-cfr/results
+  MODEL_OUT_DIR: /scratch/work/luongn1/transformer-cfr/results/mimic_lstm
+SIM:
+  OUTPUT_NOISE: 0.1
+  TREATMENT_STRENGTH: 0.0
+  CONFOUNDER_STRENGTH: 1.0
+  OUTPUT_TYPE: 'binary'
+MODEL:
+  VOCAB_SIZE: 3448
+  EMBEDDING_DIM: 510
+  FC_HIDDEN_SIZE: 32
+  LSTM_NUM_LAYER:  2
+  LSTM_HIDDEN_SIZE: 64
+  NAME: "mimic_lstm"
+  DROPOUT_P: 0.5
+TRAIN:
+  BATCH_SIZE: 32
+  LR: 1e-5
+  EPOCHS: 100
+  WEIGHT_DECAY: 0.0001
+  GRAD_CLIP_T: 1.
+  VALIDATION_SPLIT: 0.2

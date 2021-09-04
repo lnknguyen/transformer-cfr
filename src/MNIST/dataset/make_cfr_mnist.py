@@ -9,8 +9,8 @@ from scipy.stats import bernoulli
 import torch
 import torch.nn as nn
 from ast import literal_eval
+from numpy.random import default_rng
 
-import random
 def simulate_outcome(beta0, beta1, gamma, confounder, treatment, setting):
     
     no = confounder.shape[0]
@@ -23,7 +23,11 @@ def simulate_outcome(beta0, beta1, gamma, confounder, treatment, setting):
         y1 = np.random.binomial(1, p1, (no,))
         print(y0.shape)
     elif setting == 'continuous':
-        y0 = beta1*(confounder - 0.5) + np.random.normal(0, gamma)
+        
+        rng = default_rng()
+        noise = rng.normal(0, gamma, no)
+        print(noise)
+        y0 = beta1*(confounder - 0.5) + noise
         y1 = beta0 + y0
     else:
         raise Exception("Unrecognized setting")

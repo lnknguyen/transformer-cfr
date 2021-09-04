@@ -1,0 +1,25 @@
+PATH:
+  RESULT: /scratch/work/luongn1/transformer-cfr/results
+  MODEL_OUT_DIR: /scratch/work/luongn1/transformer-cfr/results/mnist_lstm
+SIM:
+  INPUT_NOISE: 0.2
+  OUTPUT_NOISE: 1.
+  TREATMENT_STRENGTH: 1.0
+  CONFOUNDER_STRENGTH: 1.0
+  OUTPUT_TYPE: 'continuous'
+MODEL:
+  EXP_NAME: "exp1"
+  VOCAB_SIZE: 258
+  EMBEDDING_DIM: 256
+  FC_HIDDEN_SIZE: 16
+  LSTM_HIDDEN_SIZE: 175
+  LSTM_NUM_LAYER: 2
+  NAME: "mnist_lstm"
+  DROPOUT_P: 0.33
+TRAIN:
+  BATCH_SIZE: 64
+  LR: 5e-6
+  EPOCHS: 50
+  WEIGHT_DECAY: 0.001
+  GRAD_CLIP_T: 1.
+  VALIDATION_SPLIT: 0.2

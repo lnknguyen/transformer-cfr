@@ -60,19 +60,25 @@ class BaseTrainer:
 
     def _init_save_path(self):
         
-        if self.model_name == "mimic_trans":
-            config_summary = "lr_{}_layer_{}_dropoutp_{}_bs_{}_hiddensz_{}_embeddim_{}".format(self.cfg.TRAIN.LR,
-                                                                                               self.cfg.MODEL.DROPOUT_P,
-                                                                                               self.cfg.MODEL.LSTM_NUM_LAYER,
-                                                                                               self.cfg.TRAIN.BATCH_SIZE,
-                                                                                               self.cfg.MODEL.LSTM_HIDDEN_SIZE,
-                                                                                               self.cfg.MODEL.EMBEDDING_DIM)
+        if self.model_name == "mimic_lstm" or self.model_name == "mnist_lstm" :
+            config_summary = "bias_{}_noise_{}_lr_{}_layer_{}_dropoutp_{}_bs_{}_hiddensz_{}_embeddim_{}".format(
+                                                                                                self.cfg.SIM.CONFOUNDER_STRENGTH,
+                                                                                                self.cfg.SIM.OUTPUT_NOISE,
+                                                                                                self.cfg.TRAIN.LR,
+                                                                                                self.cfg.MODEL.DROPOUT_P,
+                                                                                                self.cfg.MODEL.LSTM_NUM_LAYER,
+                                                                                                self.cfg.TRAIN.BATCH_SIZE,
+                                                                                                self.cfg.MODEL.LSTM_HIDDEN_SIZE,
+                                                                                                self.cfg.MODEL.EMBEDDING_DIM)
         else:
-            config_summary = "lr_{}_dropout_{}_layer_{}_bs_{}_embedddim_{}".format(self.cfg.TRAIN.LR,
-                                                                                   self.cfg.MODEL.DROPOUT_P,
-                                                                                   self.cfg.MODEL.TRANS_DEPTH,
-                                                                                   self.cfg.TRAIN.BATCH_SIZE,
-                                                                                   self.cfg.MODEL.EMBEDDING_DIM)
+            config_summary = "bias_{}_noise_{}_lr_{}_dropout_{}_layer_{}_bs_{}_embedddim_{}".format(
+                                                                                        self.cfg.SIM.CONFOUNDER_STRENGTH,
+                                                                                        self.cfg.SIM.OUTPUT_NOISE,
+                                                                                        self.cfg.TRAIN.LR,
+                                                                                        self.cfg.MODEL.DROPOUT_P,
+                                                                                        self.cfg.MODEL.TRANS_DEPTH,
+                                                                                        self.cfg.TRAIN.BATCH_SIZE,
+                                                                                        self.cfg.MODEL.EMBEDDING_DIM)
                 
         self.out_name = os.path.join(self.cfg.PATH.MODEL_OUT_DIR, self.cfg.UTILS.TIMESTAMP, config_summary)
         if not os.path.exists(self.out_name):
@@ -298,6 +304,7 @@ class BaseTrainer:
             
         self.save_metrics(test_epoch_metrics)
         return test_epoch_metrics
+
 '''
 Trainer class for MNIST dataset
 '''

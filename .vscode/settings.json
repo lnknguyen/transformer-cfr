@@ -2,5 +2,10 @@
     "jupyter.jupyterServerType": "local",
     "python.jediEnabled": false,
     "python.languageServer": "Microsoft",
-    "python.experiments.optOutFrom": ["pythonJediLSP"]
+    "python.experiments.optOutFrom": [
+        "pythonJediLSP"
+    ],
+    "files.watcherExclude": {
+        "**/target": true
+    }
 }
